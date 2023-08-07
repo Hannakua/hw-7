@@ -1,33 +1,38 @@
-from sqlalchemy import create_engine, Table, Column, Integer, String, ForeignKey
-from sqlalchemy import MetaData
-from sqlalchemy.sql import select
+from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
+
+engine = create_engine('postgres:///sqlalchemy_study.db')
+DBSession = sessionmaker(bind=engine)
+session = DBSession()
+
+Base = declarative_base()
 
 
-engine = create_engine('sqlite:///:memory:', echo=True)
-
-metadata = MetaData()
-
-users = Table('users', metadata,
-              Column('id', Integer, primary_key=True),
-              Column('name', String),
-              Column('fullname', String),
-              )
-
-addresses = Table('addresses', metadata,
-                  Column('id', Integer, primary_key=True),
-                  Column('user_id', Integer, ForeignKey('users.id')),
-                  Column('email_address', String, nullable=False)
-                  )
-
-metadata.create_all(engine)
+class Student(Base):
+    __tablename__ = 'students'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(250), nullable=False)
+    number_group = Column(String(50), ForeignKey('groups.id'))
 
 
-with engine.connect() as conn:
-    ins = users.insert().values(name='jack', fullname='Jack Jones')
-    print(str(ins))
-    result = conn.execute(ins)
+class Group(Base):
+    __tablename__ = 'groups'
+    id = Column(Integer, primary_key=True)
+    number_group = Column(String(50), nullable=False)
+    student = relationship(Student)
 
-    s = select(users)
-    result = conn.execute(s)
-    for row in result:
-        print(row)  # (1, u'jack', u'Jack Jones')
+Base.metadata.create_all(engine)
+Base.metadata.bind = engine
+
+new_student = Student(name="Anton", number_group="1")
+session.add(new_student)
+
+session.commit()
+
+new_group = Group(number_group="23")
+session.add(new_group)
+session.commit()
+
+for student in session.query(Student).all():
+    print(student.name)
