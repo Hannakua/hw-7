@@ -18,18 +18,20 @@ class Student(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(250), nullable=False)
     number_group = Column(String(50), ForeignKey('groups.id'))
-
+    group = relationship('Group', back_populates='student')
+    # marks = relationship('Mark', back_populates='student')
 
 class Group(Base):
     __tablename__ = 'groups'
     id = Column(Integer, primary_key=True)
     number_group = Column(String(50), nullable=False)
-    student = relationship(Student)
+    student = relationship('Student', back_populates='group')
 
 class Tutor(Base):
     __tablename__ = 'tutors'
     id = Column(Integer, primary_key=True)
     name = Column(String(250), nullable=False)
+    # subjects = relationship('Subject', backref='tutor')
 
 class Subject(Base):
     __tablename__ = 'subjects'
@@ -37,7 +39,7 @@ class Subject(Base):
     name = Column(String(250), nullable=False)
     tutor_id = Column('tutor_id', ForeignKey('tutors.id', ondelete='CASCADE'))
     tutor = relationship('Tutor', backref='subjects')
-
+    # marks = relationship('Mark', back_populates='subject')
 
 class Mark(Base):
     __tablename__ = 'marks'
@@ -49,26 +51,3 @@ class Mark(Base):
     student = relationship('Student', backref='marks')
     subject = relationship('Subject', backref='marks')
 
-
-class TutorStudent(Base):
-    __tablename__ = 'tutors_to_students'
-    id = Column(Integer, primary_key=True)
-    tutor_id = Column('tutor_id', ForeignKey('tutors.id', ondelete='CASCADE'))
-    student_id = Column('student_id', ForeignKey('students.id', ondelete='CASCADE'))
-
-
-
-Base.metadata.create_all(engine)
-Base.metadata.bind = engine
-
-new_student = Student(name="Max", number_group="2")
-session.add(new_student)
-
-session.commit()
-
-new_group = Group(number_group="23")
-session.add(new_group)
-session.commit()
-
-for student in session.query(Student).all():
-    print(student.name)
